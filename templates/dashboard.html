@@ -1,0 +1,203 @@
+{% extends "base.html" %}
+{% block content %}
+<style>
+    /* Дизайн для мобильного выпадающего списка */
+    .custom-dropdown-item {
+        color: var(--text-color) !important;
+        cursor: pointer;
+        padding: 8px 16px;
+    }
+    .custom-dropdown-item:hover, .custom-dropdown-item:active {
+        background-color: var(--border-color) !important;
+    }
+</style>
+
+<div class="row animate-content mt-4">
+    <div class="col-12">
+
+        <div class="d-flex flex-column flex-md-row gap-3 mb-4 justify-content-center mx-auto" style="max-width: 800px;">
+            <form action="{{ url_for('dashboard') }}" method="GET" class="d-flex gap-2 flex-grow-1">
+                <input type="text" name="search" class="form-control" placeholder="Поиск по заголовку...">
+                <button type="submit" class="btn btn-primary px-4 fw-bold rounded-pill">Найти</button>
+            </form>
+
+            <button type="button" class="btn btn-success fw-bold px-4 shadow-sm rounded-pill" data-bs-toggle="modal" data-bs-target="#createNoteModal">
+                <i class="bi bi-plus-lg me-1"></i> Создать
+            </button>
+        </div>
+
+        {% if categories %}
+        <div class="mb-5 d-flex flex-wrap gap-2 justify-content-center mx-auto" style="max-width: 900px;">
+            <a href="{{ url_for('dashboard') }}" class="btn btn-sm {% if not current_cat %}btn-primary{% else %}btn-outline-secondary{% endif %} rounded-pill px-3">Все записи</a>
+            {% for cat in categories %}
+            <a href="{{ url_for('dashboard', category=cat) }}" class="btn btn-sm {% if current_cat == cat %}btn-primary{% else %}btn-outline-secondary{% endif %} rounded-pill px-3">{{ cat }}</a>
+            {% endfor %}
+            {% if request.args.get('search') or current_cat %}
+            <a href="{{ url_for('dashboard') }}" class="btn btn-sm btn-link text-decoration-none ms-2" style="color: var(--text-color); opacity: 0.7;">Сбросить фильтры</a>
+            {% endif %}
+        </div>
+        {% endif %}
+
+        {% if notes %}
+            <div class="row">
+            {% for note in notes %}
+                <div class="col-md-6 col-lg-4 mb-4">
+                    <div class="card card-custom h-100 shadow-sm">
+
+                        <div class="card-header bg-transparent border-bottom border-secondary border-opacity-25 d-flex justify-content-between align-items-center pt-3 pb-2">
+                            <h5 class="m-0 fw-bold text-truncate" style="color: var(--text-color) !important; max-width: 65%;" title="{{ note.title }}">{{ note.title }}</h5>
+                            <span class="badge {% if note.category in ['Секретная', 'Пароли', 'Финансы', 'Личное'] %}bg-danger{% else %}bg-secondary{% endif %} rounded-pill px-2" style="font-size: 0.7rem; font-weight: normal;">{{ note.category }}</span>
+                        </div>
+
+                        <div class="card-body py-3 {% if note.category in ['Секретная', 'Пароли', 'Финансы', 'Личное'] %}blur-note{% endif %}" style="color: var(--text-color) !important; font-size: 1rem; max-height: 250px; overflow-y: auto; opacity: 0.9;">
+                            {{ note.content }}
+
+                            {% if note.file_mapping %}
+                                <div class="mt-3">
+                                    {% set ext = note.file_mapping.split('.')[-1].lower() %}
+                                    {% if ext in ['png', 'jpg', 'jpeg', 'gif'] %}
+                                        <img src="{{ url_for('static', filename='uploads/' + note.file_mapping) }}"
+                                             class="img-fluid rounded mt-2"
+                                             style="max-height: 150px; object-fit: cover; border: 1px solid var(--border-color);" alt="Прикрепленное фото">
+                                    {% else %}
+                                        <a href="{{ url_for('static', filename='uploads/' + note.file_mapping) }}"
+                                           class="btn btn-outline-primary btn-sm mt-2 rounded-pill px-3" download>
+                                            <i class="bi bi-file-earmark-arrow-down me-1"></i> Скачать файл
+                                        </a>
+                                    {% endif %}
+                                </div>
+                            {% endif %}
+                            </div>
+
+                        <div class="card-footer bg-transparent border-top-0 pt-2 pb-3 d-flex justify-content-between align-items-center">
+                            <small style="color: var(--text-color) !important; font-size: 0.8rem; opacity: 0.6;"><i class="bi bi-clock me-1"></i>{{ note.date_posted }}</small>
+                            <div class="d-flex gap-2">
+                                <a href="{{ url_for('download_note', note_id=note.id) }}" class="btn btn-action btn-action-download btn-sm rounded-pill px-3 py-2"><i class="bi bi-download"></i></a>
+                                <button type="button" class="btn btn-action btn-action-edit btn-sm rounded-pill px-3 py-2" data-bs-toggle="modal" data-bs-target="#editNoteModal{{ note.id }}"><i class="bi bi-pencil-square"></i></button>
+                                <a href="{{ url_for('delete_note', note_id=note.id) }}" class="btn btn-action btn-action-delete btn-sm rounded-pill px-3 py-2" onclick="return confirm('Точно удалить?');"><i class="bi bi-trash3-fill"></i></a>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="modal fade" id="editNoteModal{{ note.id }}" tabindex="-1">
+                  <div class="modal-dialog modal-dialog-centered">
+                    <div class="modal-content card-custom">
+                      <div class="modal-header border-secondary border-opacity-25 pt-4 pb-3 px-4">
+                        <h5 class="modal-title fw-bold" style="color: var(--text-color) !important;"><i class="bi bi-pencil me-2 text-warning"></i>Редактировать</h5>
+                        <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                      </div>
+                      <form action="{{ url_for('edit_note', note_id=note.id) }}" method="POST" enctype="multipart/form-data">
+                          <div class="modal-body px-4 py-4">
+                              <div class="mb-3">
+                                  <label class="form-label small fw-bold" style="color: var(--text-color) !important; opacity: 0.7;">Название</label>
+                                  <input type="text" name="title" class="form-control" value="{{ note.title }}">
+                              </div>
+
+                              <div class="mb-3">
+                                  <label class="form-label small fw-bold" style="color: var(--text-color) !important; opacity: 0.7;">Категория</label>
+                                  <div class="input-group">
+                                      <input type="text" name="category" id="catEdit{{ note.id }}" class="form-control border-secondary" style="background-color: var(--card-bg); color: var(--text-color);" value="{{ note.category }}" autocomplete="off">
+                                      <button class="btn border-secondary dropdown-toggle" type="button" data-bs-toggle="dropdown" style="background-color: var(--card-bg); color: var(--text-color);"></button>
+                                      <ul class="dropdown-menu dropdown-menu-end shadow" style="background-color: var(--card-bg); border: 1px solid var(--border-color); max-height: 200px; overflow-y: auto;">
+                                          <li><a class="dropdown-item custom-dropdown-item" href="javascript:void(0);" onclick="document.getElementById('catEdit{{ note.id }}').value='Секретная';">Секретная</a></li>
+                                          <li><a class="dropdown-item custom-dropdown-item" href="javascript:void(0);" onclick="document.getElementById('catEdit{{ note.id }}').value='Пароли';">Пароли</a></li>
+                                          <li><a class="dropdown-item custom-dropdown-item" href="javascript:void(0);" onclick="document.getElementById('catEdit{{ note.id }}').value='ПИН-коды';">ПИН-коды</a></li>
+                                          <li><a class="dropdown-item custom-dropdown-item" href="javascript:void(0);" onclick="document.getElementById('catEdit{{ note.id }}').value='Финансы';">Финансы</a></li>
+                                          <li><a class="dropdown-item custom-dropdown-item" href="javascript:void(0);" onclick="document.getElementById('catEdit{{ note.id }}').value='Личное';">Личное</a></li>
+                                          {% for cat in categories %}
+                                              {% if cat not in ['Секретная', 'Пароли', 'ПИН-коды', 'Финансы', 'Личное'] %}
+                                                  <li><a class="dropdown-item custom-dropdown-item" href="javascript:void(0);" onclick="document.getElementById('catEdit{{ note.id }}').value='{{ cat }}';">{{ cat }}</a></li>
+                                              {% endif %}
+                                          {% endfor %}
+                                      </ul>
+                                  </div>
+                              </div>
+
+                              <div class="mb-3">
+                                  <label class="form-label small fw-bold" style="color: var(--text-color) !important; opacity: 0.7;">Текст записи</label>
+                                  <textarea name="content" class="form-control" rows="4" required>{{ note.content }}</textarea>
+                              </div>
+
+                              <div class="mb-2">
+                                  <label class="form-label small fw-bold" style="color: var(--text-color) !important; opacity: 0.7;">Прикрепить или заменить файл</label>
+                                  <input class="form-control form-control-sm" type="file" name="file">
+                                  {% if note.file_mapping %}
+                                      <div class="mt-1 small" style="opacity: 0.6;">Текущий файл: {{ note.file_mapping.split('_', 1)[-1] }}</div>
+                                  {% endif %}
+                              </div>
+                          </div>
+                          <div class="modal-footer border-secondary border-opacity-25 px-4 pb-4 pt-3">
+                              <button type="button" class="btn btn-outline-secondary fw-bold rounded-pill px-3" data-bs-dismiss="modal">Отмена</button>
+                              <button type="submit" class="btn btn-warning fw-bold px-4 text-dark rounded-pill">Сохранить</button>
+                          </div>
+                      </form>
+                    </div>
+                  </div>
+                </div>
+            {% endfor %}
+            </div>
+        {% else %}
+            <div class="text-center mt-4 p-5 card card-custom border-0 mx-auto" style="max-width: 600px;">
+                <i class="bi bi-inboxes mb-3" style="font-size: 4rem; opacity: 0.3; color: var(--text-color) !important;"></i>
+                <h5 class="fw-bold" style="color: var(--text-color) !important;">Здесь пока пусто</h5>
+                <p class="mb-0" style="color: var(--text-color) !important; opacity: 0.7;">Нажмите зеленую кнопку «Создать», чтобы добавить запись.</p>
+            </div>
+        {% endif %}
+
+    </div>
+</div>
+
+<div class="modal fade" id="createNoteModal" tabindex="-1">
+  <div class="modal-dialog modal-dialog-centered">
+    <div class="modal-content card-custom">
+      <div class="modal-header border-secondary border-opacity-25 pt-4 pb-3 px-4">
+        <h5 class="modal-title fw-bold" style="color: var(--text-color) !important;"><i class="bi bi-pencil-square me-2 text-primary"></i>Новая запись</h5>
+        <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+      </div>
+      <form action="{{ url_for('add_note') }}" method="POST" enctype="multipart/form-data">
+          <div class="modal-body px-4 py-4">
+              <div class="mb-3">
+                  <label class="form-label small fw-bold" style="color: var(--text-color) !important; opacity: 0.7;">Название</label>
+                  <input type="text" name="title" class="form-control" placeholder="Например: ПИН-код карты">
+              </div>
+
+              <div class="mb-3">
+                  <label class="form-label small fw-bold" style="color: var(--text-color) !important; opacity: 0.7;">Категория</label>
+                  <div class="input-group">
+                      <input type="text" name="category" id="catCreate" class="form-control border-secondary" style="background-color: var(--card-bg); color: var(--text-color);" placeholder="Своя или из списка..." autocomplete="off">
+                      <button class="btn border-secondary dropdown-toggle" type="button" data-bs-toggle="dropdown" style="background-color: var(--card-bg); color: var(--text-color);"></button>
+                      <ul class="dropdown-menu dropdown-menu-end shadow" style="background-color: var(--card-bg); border: 1px solid var(--border-color); max-height: 200px; overflow-y: auto;">
+                          <li><a class="dropdown-item custom-dropdown-item" href="javascript:void(0);" onclick="document.getElementById('catCreate').value='Секретная';">Секретная</a></li>
+                          <li><a class="dropdown-item custom-dropdown-item" href="javascript:void(0);" onclick="document.getElementById('catCreate').value='Пароли';">Пароли</a></li>
+                          <li><a class="dropdown-item custom-dropdown-item" href="javascript:void(0);" onclick="document.getElementById('catCreate').value='ПИН-коды';">ПИН-коды</a></li>
+                          <li><a class="dropdown-item custom-dropdown-item" href="javascript:void(0);" onclick="document.getElementById('catCreate').value='Финансы';">Финансы</a></li>
+                          <li><a class="dropdown-item custom-dropdown-item" href="javascript:void(0);" onclick="document.getElementById('catCreate').value='Личное';">Личное</a></li>
+                          {% for cat in categories %}
+                              {% if cat not in ['Секретная', 'Пароли', 'ПИН-коды', 'Финансы', 'Личное'] %}
+                                  <li><a class="dropdown-item custom-dropdown-item" href="javascript:void(0);" onclick="document.getElementById('catCreate').value='{{ cat }}';">{{ cat }}</a></li>
+                              {% endif %}
+                          {% endfor %}
+                      </ul>
+                  </div>
+              </div>
+
+              <div class="mb-3">
+                  <label class="form-label small fw-bold" style="color: var(--text-color) !important; opacity: 0.7;">Текст записи</label>
+                  <textarea name="content" class="form-control" rows="4" required></textarea>
+              </div>
+
+              <div class="mb-2">
+                  <label class="form-label small fw-bold" style="color: var(--text-color) !important; opacity: 0.7;">Прикрепить файл (необязательно)</label>
+                  <input class="form-control form-control-sm" type="file" name="file">
+              </div>
+          </div>
+          <div class="modal-footer border-secondary border-opacity-25 px-4 pb-4 pt-3">
+              <button type="button" class="btn btn-outline-secondary fw-bold rounded-pill px-3" data-bs-dismiss="modal">Отмена</button>
+              <button type="submit" class="btn btn-primary fw-bold px-4 rounded-pill">Сохранить</button>
+          </div>
+      </form>
+    </div>
+  </div>
+</div>
+{% endblock %}

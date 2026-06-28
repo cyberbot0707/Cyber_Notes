@@ -1,0 +1,38 @@
+{% extends "base.html" %}
+{% block content %}
+<div class="row justify-content-center animate-content mt-5">
+    <div class="col-md-4">
+        <div class="card card-custom p-4 shadow-lg border-0" style="background: var(--card-bg);">
+            <div class="text-center mb-4">
+                <i class="bi bi-shield-lock text-primary" style="font-size: 3rem;"></i>
+                <h3 class="fw-bold mt-2">Авторизация</h3>
+                <p class="text-secondary small">Введите данные для доступа к сейфу</p>
+            </div>
+
+            <form method="POST">
+                <div class="mb-3">
+                    <label class="form-label text-secondary small fw-bold">Логин</label>
+                    <input type="text" name="username" class="form-control bg-dark border-secondary text-white" placeholder="Ваш логин" required>
+                </div>
+                <div class="mb-4">
+                    <label class="form-label text-secondary small fw-bold">Пароль</label>
+                    <input type="password" name="password" class="form-control bg-dark border-secondary text-white" placeholder="••••••••" required>
+                </div>
+
+                <button type="submit" class="btn btn-primary w-100 py-2 fw-bold mb-3 fs-5">
+                    <i class="bi bi-box-arrow-in-right me-2"></i>Войти
+                </button>
+
+                <div class="d-flex gap-2">
+                    <a href="{{ url_for('register') }}" class="btn btn-outline-secondary w-50 py-2 fw-bold d-flex align-items-center justify-content-center text-decoration-none" style="font-size: 0.9rem;">
+                        Регистрация
+                    </a>
+                    <a href="{{ url_for('reset') }}" class="btn btn-outline-warning w-50 py-2 fw-bold d-flex align-items-center justify-content-center text-decoration-none" style="font-size: 0.9rem;">
+                        Забыли пароль?
+                    </a>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+{% endblock %}

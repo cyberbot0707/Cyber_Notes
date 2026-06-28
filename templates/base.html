@@ -1,0 +1,197 @@
+<!DOCTYPE html>
+<html lang="ru" data-bs-theme="dark">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>CryptoNotes | Сейф</title>
+
+  <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 16' fill='%233b82f6'><path d='M8 0c-.69 0-1.843.265-2.928.56-1.11.3-2.229.655-2.887.87a1.54 1.54 0 0 0-1.044 1.262c-.596 4.477.787 7.795 2.465 9.99a11.777 11.777 0 0 0 2.517 2.453c.386.273.744.482 1.048.625.28.132.581.24.829.24s.548-.108.829-.24a7.159 7.159 0 0 0 1.048-.625 11.775 11.775 0 0 0 2.517-2.453c1.678-2.195 3.061-5.513 2.465-9.99a1.541 1.541 0 0 0-1.044-1.263 62.467 62.467 0 0 0-2.887-.87C9.843.266 8.69 0 8 0zm0 5a1.5 1.5 0 0 1 .5 2.915l.385 1.99a.5.5 0 0 1-.491.595h-.788a.5.5 0 0 1-.49-.595l.384-1.99A1.5 1.5 0 0 1 8 5z'/></svg>">
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.1/font/bootstrap-icons.css">
+    <style>
+
+        :root[data-bs-theme="dark"] {
+            --bg-color: #14161a;
+            --card-bg: #1e2128;
+            --border-color: rgba(255, 255, 255, 0.08);
+            --accent-color: #3b82f6;
+            --accent-hover: #2563eb;
+            --text-main: #e2e8f0;
+            --nav-bg: rgba(20, 22, 26, 0.85);
+        }
+        :root[data-bs-theme="light"] {
+            --bg-color: #f3f4f6;
+            --card-bg: #ffffff;
+            --border-color: rgba(0, 0, 0, 0.1);
+            --accent-color: #3b82f6;
+            --accent-hover: #2563eb;
+            --text-main: #1f2937;
+            --nav-bg: rgba(243, 244, 246, 0.85);
+        }
+
+
+        body {
+            background-color: var(--bg-color);
+            color: var(--text-main);
+            font-family: 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+            transition: background-color 0.3s, color 0.3s;
+        }
+
+
+        .navbar {
+            background: var(--nav-bg) !important;
+            backdrop-filter: blur(10px);
+            border-bottom: 1px solid var(--border-color);
+            transition: background-color 0.3s, border-color 0.3s;
+        }
+        .navbar-brand { font-weight: 600; letter-spacing: 0.5px; color: var(--text-main) !important; }
+        .navbar-brand i { color: var(--accent-color); margin-right: 6px; }
+
+
+        .card-custom {
+            background-color: var(--card-bg);
+            border: 1px solid var(--border-color);
+            border-radius: 12px;
+            transition: transform 0.2s, box-shadow 0.2s, border-color 0.2s;
+        }
+        .card-custom:hover {
+            transform: translateY(-4px);
+            box-shadow: 0 10px 20px rgba(0, 0, 0, 0.08);
+            border-color: rgba(59, 130, 246, 0.4);
+        }
+
+
+        .blur-note {
+            filter: blur(4px) grayscale(10%);
+            opacity: 0.85;
+            transition: all 0.4s ease;
+        }
+        .blur-note:hover {
+            filter: blur(0) grayscale(0%);
+            opacity: 1;
+        }
+
+
+        .form-control {
+            background-color: var(--bg-color) !important;
+            border: 1px solid var(--border-color) !important;
+            color: var(--text-main) !important;
+            border-radius: 8px;
+            padding: 0.6rem 1rem;
+        }
+        .form-control:focus {
+            border-color: var(--accent-color) !important;
+            box-shadow: 0 0 0 0.25rem rgba(59, 130, 246, 0.15) !important;
+        }
+
+
+        .btn { border-radius: 8px; font-weight: 500; transition: all 0.2s; }
+        .btn-primary {
+            background-color: var(--accent-color);
+            border: none;
+            color: #fff;
+        }
+        .btn-primary:hover {
+            background-color: var(--accent-hover);
+            transform: scale(1.02);
+            color: #fff;
+        }
+
+
+        ::-webkit-scrollbar { width: 6px; }
+        ::-webkit-scrollbar-track { background: var(--bg-color); }
+        ::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 10px; }
+        :root[data-bs-theme="dark"] ::-webkit-scrollbar-thumb { background: #475569; }
+
+
+        @keyframes copyPulse {
+            0% { transform: scale(1); background-color: rgba(59, 130, 246, 0.1); }
+            50% { transform: scale(1.15); box-shadow: 0 0 0 8px rgba(59, 130, 246, 0); }
+            100% { transform: scale(1); box-shadow: 0 0 0 0 rgba(59, 130, 246, 0); }
+        }
+        .copied-anim {
+            animation: copyPulse 0.5s ease-out;
+            border-color: var(--accent-color) !important;
+            color: var(--accent-color) !important;
+        }
+
+    </style>
+</head>
+<body>
+    <nav class="navbar navbar-expand-lg sticky-top mb-5">
+        <div class="container">
+            <a class="navbar-brand d-flex align-items-center" href="{{ url_for('dashboard') }}">
+                <i class="bi bi-shield-lock-fill fs-4"></i> CryptoNotes
+            </a>
+            {% if session.username %}
+            <div class="d-flex gap-3 align-items-center">
+
+                <button id="theme-toggle" class="btn btn-outline-secondary btn-sm rounded-circle d-flex align-items-center justify-content-center" style="width: 32px; height: 32px;" title="Сменить тему">
+                    <i class="bi bi-moon-stars-fill" id="theme-icon"></i>
+                </button>
+
+                <span class="text-secondary d-none d-sm-inline"><i class="bi bi-person-circle"></i> {{ session.username }}</span>
+                <a href="{{ url_for('account') }}" class="btn btn-outline-secondary btn-sm"><i class="bi bi-gear"></i> Настройки</a>
+                <a href="{{ url_for('logout') }}" class="btn btn-outline-danger btn-sm"><i class="bi bi-box-arrow-right"></i> Выйти</a>
+            </div>
+
+
+            {% endif %}
+        </div>
+    </nav>
+
+    <div class="container pb-5">
+        {% with messages = get_flashed_messages(with_categories=true) %}
+            {% if messages %}
+                {% for category, message in messages %}
+                    <div class="alert alert-{{ category }} alert-dismissible fade show border-0 shadow-sm" style="border-radius: 12px;" role="alert">
+                        {% if category == 'danger' %}<i class="bi bi-exclamation-triangle-fill me-2"></i>
+                        {% elif category == 'success' %}<i class="bi bi-check-circle-fill me-2"></i>
+                        {% elif category == 'warning' %}<i class="bi bi-exclamation-circle-fill me-2"></i>
+                        {% else %}<i class="bi bi-info-circle-fill me-2"></i>{% endif %}
+                        {{ message }}
+                        <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+                    </div>
+                {% endfor %}
+            {% endif %}
+        {% endwith %}
+        {% block content %}{% endblock %}
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
+
+    <script>
+        document.addEventListener("DOMContentLoaded", () => {
+            const toggleBtn = document.getElementById("theme-toggle");
+            const themeIcon = document.getElementById("theme-icon");
+            const htmlElement = document.documentElement;
+
+            if (toggleBtn) {
+
+                const savedTheme = localStorage.getItem("theme") || "dark";
+                htmlElement.setAttribute("data-bs-theme", savedTheme);
+                updateIcon(savedTheme);
+
+
+                toggleBtn.addEventListener("click", () => {
+                    const currentTheme = htmlElement.getAttribute("data-bs-theme");
+                    const newTheme = currentTheme === "dark" ? "light" : "dark";
+
+                    htmlElement.setAttribute("data-bs-theme", newTheme);
+                    localStorage.setItem("theme", newTheme); // Сохраняем выбор
+                    updateIcon(newTheme);
+                });
+            }
+
+
+            function updateIcon(theme) {
+                if (theme === "dark") {
+                    themeIcon.className = "bi bi-moon-stars-fill text-warning"; // Желтая луна
+                } else {
+                    themeIcon.className = "bi bi-sun-fill text-warning"; // Желтое солнце
+                }
+            }
+        });
+    </script>
+</body>
+</html>
